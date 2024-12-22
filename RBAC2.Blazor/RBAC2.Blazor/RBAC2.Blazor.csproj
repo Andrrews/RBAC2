@@ -21,8 +21,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Components\Pages\RBAC\" />
     <Folder Include="Middlewares\" />
-    <Folder Include="Services\" />
   </ItemGroup>
 
 </Project>

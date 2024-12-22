@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\RBAC2.Database\RBAC2.Database.csproj" />
+    <ProjectReference Include="..\RBAC2.Domain\RBAC2.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>

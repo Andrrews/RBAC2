@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using RBAC2.Database.Entities;
+﻿using RBAC2.Database.Entities;
 
 namespace RBAC2.Database
 {

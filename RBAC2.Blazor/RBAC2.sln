@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.12.35527.113 d17.12
+VisualStudioVersion = 17.12.35527.113
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RBAC2.Blazor", "RBAC2.Blazor\RBAC2.Blazor.csproj", "{E4740920-606B-4D9B-9182-B0CD7F06B68A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RBAC2.Database", "RBAC2.Database\RBAC2.Database.csproj", "{127A977D-6CE9-4B34-931F-7A8A0E9C442D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RBAC2.Domain", "RBAC2.Domain\RBAC2.Domain.csproj", "{E42D81F8-A62C-4FC4-98EE-CBDF0EF41CFB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{127A977D-6CE9-4B34-931F-7A8A0E9C442D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{127A977D-6CE9-4B34-931F-7A8A0E9C442D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{127A977D-6CE9-4B34-931F-7A8A0E9C442D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E42D81F8-A62C-4FC4-98EE-CBDF0EF41CFB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E42D81F8-A62C-4FC4-98EE-CBDF0EF41CFB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E42D81F8-A62C-4FC4-98EE-CBDF0EF41CFB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E42D81F8-A62C-4FC4-98EE-CBDF0EF41CFB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

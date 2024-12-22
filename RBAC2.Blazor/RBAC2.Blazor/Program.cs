@@ -1,11 +1,9 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Design;
 using RBAC2.Blazor.Components;
 using RBAC2.Database;
-using RBAC2.Database.Seed;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Options;
+using RBAC2.Domain;
+using RBAC2.Domain.Services;
 
 namespace RBAC2.Blazor
 {
@@ -24,9 +22,15 @@ namespace RBAC2.Blazor
             builder.Services.AddIdentity<IdentityUser, IdentityRole>()
                 .AddEntityFrameworkStores<RbacDbContext>();
 
+            // Add AutoMapper
+            builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
+
+            // Register domain services
+            builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<ITaskService, TaskService>();
+            builder.Services.AddScoped<IProjectService, ProjectService>();
 
             var app = builder.Build();
-           
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())

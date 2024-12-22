@@ -1,0 +1,274 @@
+﻿@page "/users"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using RBAC2.Domain.Models
+@inject IUserService UserService
+@inject RoleManager<IdentityRole> RoleManager
+@inject IClaimDictionaryService ClaimDictionaryService
+@inject UserManager<IdentityUser> UserManager
+@rendermode  InteractiveServer
+@attribute [Authorize(Roles = "Administrator")]
+<h3>Manage Users</h3>
+
+<div>
+    <h4>Add New User</h4>
+    <EditForm Model="@newUser" OnValidSubmit="AddUser">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <div>
+            <label>Username:</label>
+            <InputText @bind-Value="newUser.Login" />
+        </div>
+        <div>
+            <label>Is Active:</label>
+            <InputCheckbox @bind-Value="newUser.CzyAktywny" />
+        </div>
+        <button type="submit">Add User</button>
+    </EditForm>
+</div>
+
+<div>
+    <h4>Existing Users</h4>
+    <table>
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in users)
+            {
+                <tr>
+                    <td>@user.Login</td>
+                    <td>
+                        <button @onclick="() => EditUser(user)">Edit</button>
+                        <button @onclick="() => DeleteUser(user.UserId)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (isEditing)
+{
+    <div>
+        <h4>Edit User</h4>
+        <EditForm Model="@editUser" OnValidSubmit="UpdateUser">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div>
+                <label>Username:</label>
+                <InputText @bind-Value="editUser.Login" />
+            </div>
+            <div>
+                <label>Is Active:</label>
+                <InputCheckbox @bind-Value="editUser.CzyAktywny" />
+            </div>
+            <div>
+                <label>Assign Roles:</label>
+                <select @bind="selectedRoleId">
+                    <option value="">Select a role</option>
+                    @foreach (var role in roles)
+                    {
+                        <option value="@role.Id">@role.Name</option>
+                    }
+                </select>
+                <button type="button" @onclick="AssignRole">Assign Role</button>
+            </div>
+            <div>
+                <h5>Assigned Roles</h5>
+                <ul>
+                    @foreach (var role in assignedRoles)
+                    {
+                        <li>@role.Name <button @onclick="() => RemoveRole(role)">Remove</button></li>
+                    }
+                </ul>
+            </div>
+            <div>
+                <label>Assign Claims:</label>
+                <select @bind="selectedClaimId">
+                    <option value="">Select a claim</option>
+                    @foreach (var claim in claims)
+                    {
+                        <option value="@claim.ClaimId">@claim.ClaimType - @claim.ClaimValue</option>
+                    }
+                </select>
+                <button type="button" @onclick="AssignClaim">Assign Claim</button>
+            </div>
+            <div>
+                <h5>Assigned Claims</h5>
+                <ul>
+                    @foreach (var claim in assignedClaims)
+                    {
+                        <li>@claim.ClaimType - @claim.ClaimValue <button @onclick="() => RemoveClaim(claim)">Remove</button></li>
+                    }
+                </ul>
+            </div>
+            <button type="submit">Update User</button>
+            <button @onclick="CancelEdit">Cancel</button>
+        </EditForm>
+    </div>
+}
+
+@code {
+    private List<UserModel> users = new List<UserModel>();
+    private UserModel newUser = new UserModel();
+    private UserModel editUser = new UserModel();
+    private List<IdentityRole> roles;
+    private List<ClaimDictionaryModel> claims;
+    private List<IdentityRole> assignedRoles = new List<IdentityRole>();
+    private List<ClaimDictionaryModel> assignedClaims = new List<ClaimDictionaryModel>();
+    private string selectedRoleId;
+    private string selectedClaimId;
+    private bool isEditing = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Pobiera wszystkich użytkowników z serwisu użytkowników
+        users = (await UserService.GetAllUsersAsync()).ToList();
+        // Pobiera wszystkie role z menedżera ról
+        roles = RoleManager.Roles.ToList();
+        // Pobiera wszystkie roszczenia z serwisu słownika roszczeń
+        claims = (await ClaimDictionaryService.GetAllClaimsAsync()).ToList();
+    }
+
+    private async Task AddUser()
+    {
+        // Dodaje nowego użytkownika za pomocą serwisu użytkowników
+        await UserService.CreateUserAsync(newUser);
+        // Aktualizuje listę użytkowników po dodaniu nowego użytkownika
+        users = (await UserService.GetAllUsersAsync()).ToList();
+        // Resetuje model nowego użytkownika
+        newUser = new UserModel();
+    }
+
+    private async Task EditUser(UserModel user)
+    {
+        // Ustawia model edytowanego użytkownika na podstawie wybranego użytkownika
+        editUser = new UserModel
+            {
+                UserId = user.UserId,
+                Login = user.Login,
+                CzyAktywny = user.CzyAktywny,
+                IdentityUserId = user.IdentityUserId
+            };
+        // Ustawia flagę edycji na true
+        isEditing = true;
+        // Ładuje przypisane role dla edytowanego użytkownika
+        await LoadAssignedRoles(user.IdentityUserId);
+        // Ładuje przypisane roszczenia dla edytowanego użytkownika
+        await LoadAssignedClaims(user.IdentityUserId);
+    }
+
+    private async Task UpdateUser()
+    {
+        // Aktualizuje użytkownika za pomocą serwisu użytkowników
+        await UserService.UpdateUserAsync(editUser);
+        // Aktualizuje listę użytkowników po edycji użytkownika
+        users = (await UserService.GetAllUsersAsync()).ToList();
+        // Resetuje flagę edycji i model edytowanego użytkownika
+        isEditing = false;
+        editUser = new UserModel();
+    }
+
+    private async Task DeleteUser(int userId)
+    {
+        // Usuwa użytkownika za pomocą serwisu użytkowników
+        await UserService.DeleteUserAsync(userId);
+        // Aktualizuje listę użytkowników po usunięciu użytkownika
+        users = (await UserService.GetAllUsersAsync()).ToList();
+    }
+
+    private void CancelEdit()
+    {
+        // Anuluje edycję użytkownika, resetuje flagę edycji i model edytowanego użytkownika
+        isEditing = false;
+        editUser = new UserModel();
+        // Czyści listy przypisanych ról i roszczeń
+        assignedRoles.Clear();
+        assignedClaims.Clear();
+    }
+
+    private async Task AssignRole()
+    {
+        if (!string.IsNullOrEmpty(selectedRoleId))
+        {
+            // Znajduje rolę na podstawie wybranego identyfikatora roli
+            var role = roles.FirstOrDefault(r => r.Id == selectedRoleId);
+            if (role != null && !assignedRoles.Any(ar => ar.Id == role.Id))
+            {
+                // Dodaje rolę do listy przypisanych ról
+                assignedRoles.Add(role);
+                // Znajduje użytkownika na podstawie identyfikatora użytkownika
+                var identityUser = await UserManager.FindByIdAsync(editUser.IdentityUserId);
+                // Przypisuje rolę użytkownikowi
+                await UserManager.AddToRoleAsync(identityUser, role.Name);
+            }
+        }
+    }
+
+    private async Task RemoveRole(IdentityRole role)
+    {
+        // Usuwa rolę z listy przypisanych ról
+        assignedRoles.Remove(role);
+        // Znajduje użytkownika na podstawie identyfikatora użytkownika
+        var identityUser = await UserManager.FindByIdAsync(editUser.IdentityUserId);
+        // Usuwa rolę od użytkownika
+        var result = await UserManager.RemoveFromRoleAsync(identityUser, role.Name);
+        if (!result.Succeeded)
+        {
+            // Wypisuje błąd, jeśli usunięcie roli nie powiodło się
+            Console.WriteLine($"Removing role error : {result.Errors}");
+        }
+    }
+
+    private async Task AssignClaim()
+    {
+        if (!string.IsNullOrEmpty(selectedClaimId))
+        {
+            // Znajduje roszczenie na podstawie wybranego identyfikatora roszczenia
+            var claim = claims.FirstOrDefault(c => c.ClaimId == int.Parse(selectedClaimId));
+            if (claim != null && !assignedClaims.Any(ac => ac.ClaimId == claim.ClaimId))
+            {
+                // Dodaje roszczenie do listy przypisanych roszczeń
+                assignedClaims.Add(claim);
+                // Znajduje użytkownika na podstawie identyfikatora użytkownika
+                var identityUser = await UserManager.FindByIdAsync(editUser.IdentityUserId);
+                // Przypisuje roszczenie użytkownikowi
+                await UserManager.AddClaimAsync(identityUser, new System.Security.Claims.Claim(claim.ClaimType, claim.ClaimValue));
+            }
+        }
+    }
+
+    private async Task RemoveClaim(ClaimDictionaryModel claim)
+    {
+        // Usuwa roszczenie z listy przypisanych roszczeń
+        assignedClaims.Remove(claim);
+        // Znajduje użytkownika na podstawie identyfikatora użytkownika
+        var identityUser = await UserManager.FindByIdAsync(editUser.IdentityUserId);
+        // Usuwa roszczenie od użytkownika
+        await UserManager.RemoveClaimAsync(identityUser, new System.Security.Claims.Claim(claim.ClaimType, claim.ClaimValue));
+    }
+
+    private async Task LoadAssignedRoles(string identityUserId)
+    {
+        // Znajduje użytkownika na podstawie identyfikatora użytkownika
+        var identityUser = await UserManager.FindByIdAsync(identityUserId);
+        // Pobiera role przypisane do użytkownika
+        var userRoles = await UserManager.GetRolesAsync(identityUser);
+        // Filtruje role, które są przypisane do użytkownika
+        assignedRoles = roles.Where(r => userRoles.Contains(r.Name)).ToList();
+    }
+
+    private async Task LoadAssignedClaims(string identityUserId)
+    {
+        // Znajduje użytkownika na podstawie identyfikatora użytkownika
+        var identityUser = await UserManager.FindByIdAsync(identityUserId);
+        // Pobiera roszczenia przypisane do użytkownika
+        var userClaims = await UserManager.GetClaimsAsync(identityUser);
+        // Filtruje roszczenia, które są przypisane do użytkownika
+        assignedClaims = claims.Where(c => userClaims.Any(uc => uc.Type == c.ClaimType && uc.Value == c.ClaimValue)).ToList();
+    }
+}

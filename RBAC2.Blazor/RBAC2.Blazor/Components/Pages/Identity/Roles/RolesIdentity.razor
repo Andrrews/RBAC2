@@ -1,0 +1,170 @@
+﻿@page "/roles"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@inject RoleManager<IdentityRole> RoleManager
+@inject IClaimDictionaryService ClaimDictionaryService
+@using Microsoft.AspNetCore.Components.Forms
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Administrator")]
+<h3>Manage Roles</h3>
+
+<div>
+    <h4>Add New Role</h4>
+    <EditForm Model="@newRole" OnValidSubmit="AddRole">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <div>
+            <label>Role Name:</label>
+            <InputText @bind-Value="newRole.Name" />
+        </div>
+        <button type="submit">Add Role</button>
+    </EditForm>
+</div>
+
+<div>
+    <h4>Existing Roles</h4>
+    <table>
+        <thead>
+            <tr>
+                <th>Role Name</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var role in roles)
+            {
+                <tr>
+                    <td>@role.Name</td>
+                    <td>
+                        <button @onclick="() => EditRole(role)">Edit</button>
+                        <button @onclick="() => DeleteRole(role.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (isEditing)
+{
+    <div>
+        <h4>Edit Role</h4>
+        <EditForm Model="@editRole" OnValidSubmit="UpdateRole">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div>
+                <label>Role Name:</label>
+                <InputText @bind-Value="editRole.Name" />
+            </div>
+            <div>
+                <label>Assign Claims:</label>
+                <select @bind="@selectedClaimId">
+                    <option value="">Select a claim</option>
+                    @foreach (var claim in claims)
+                    {
+                        <option value="@claim.ClaimId">@claim.ClaimType - @claim.ClaimValue</option>
+                    }
+                </select>
+
+                <button type="button" @onclick="AssignClaim">Assign Claim</button>
+            </div>
+            <div>
+                <h5>Assigned Claims</h5>
+                <ul>
+                    @foreach (var claim in assignedClaims)
+                    {
+                        <li>@claim.ClaimType - @claim.ClaimValue <button @onclick="() => RemoveClaim(claim)">Remove</button></li>
+                    }
+                </ul>
+            </div>
+            <button type="submit">Update Role</button>
+            <button @onclick="CancelEdit">Cancel</button>
+        </EditForm>
+    </div>
+}
+
+@code {
+    private List<IdentityRole> roles;
+    private IdentityRole newRole = new IdentityRole();
+    private IdentityRole editRole = new IdentityRole();
+    private List<ClaimDictionaryModel> claims;
+    private List<ClaimDictionaryModel> assignedClaims = new List<ClaimDictionaryModel>();
+    private string selectedClaimId;
+    private bool isEditing = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        roles = RoleManager.Roles.ToList();
+        claims = (await ClaimDictionaryService.GetAllClaimsAsync()).ToList();
+    }
+
+    private async Task AddRole()
+    {
+        await RoleManager.CreateAsync(newRole);
+        roles = RoleManager.Roles.ToList();
+        newRole = new IdentityRole();
+    }
+
+    private void EditRole(IdentityRole role)
+    {
+        editRole = new IdentityRole
+        {
+            Id = role.Id,
+            Name = role.Name
+        };
+        isEditing = true;
+        LoadAssignedClaims(role.Id);
+    }
+
+    private async Task UpdateRole()
+    {
+        var role = await RoleManager.FindByIdAsync(editRole.Id);
+        role.Name = editRole.Name;
+        await RoleManager.UpdateAsync(role);
+        roles = RoleManager.Roles.ToList();
+        isEditing = false;
+        editRole = new IdentityRole();
+    }
+
+    private async Task DeleteRole(string roleId)
+    {
+        var role = await RoleManager.FindByIdAsync(roleId);
+        await RoleManager.DeleteAsync(role);
+        roles = RoleManager.Roles.ToList();
+    }
+
+    private void CancelEdit()
+    {
+        isEditing = false;
+        editRole = new IdentityRole();
+        assignedClaims.Clear();
+    }
+
+    private async Task AssignClaim()
+    {
+        if (!string.IsNullOrEmpty(selectedClaimId))
+        {
+            var claim = claims.FirstOrDefault(c => c.ClaimId == int.Parse(selectedClaimId));
+            if (claim != null && !assignedClaims.Any(ac => ac.ClaimId == claim.ClaimId))
+            {
+                assignedClaims.Add(claim);
+                var role = await RoleManager.FindByIdAsync(editRole.Id);
+                await RoleManager.AddClaimAsync(role, new System.Security.Claims.Claim(claim.ClaimType, claim.ClaimValue));
+            }
+        }
+    }
+
+    private async Task RemoveClaim(ClaimDictionaryModel claim)
+    {
+        assignedClaims.Remove(claim);
+        var role = await RoleManager.FindByIdAsync(editRole.Id);
+        await RoleManager.RemoveClaimAsync(role, new System.Security.Claims.Claim(claim.ClaimType, claim.ClaimValue));
+    }
+
+    private async void LoadAssignedClaims(string roleId)
+    {
+        var role = await RoleManager.FindByIdAsync(roleId);
+        var roleClaims = await RoleManager.GetClaimsAsync(role);
+        assignedClaims = claims.Where(c => roleClaims.Any(rc => rc.Type == c.ClaimType && rc.Value == c.ClaimValue)).ToList();
+    }
+}

@@ -1,0 +1,121 @@
+﻿@page "/claims-dictionary"
+@using Microsoft.AspNetCore.Authorization
+@inject IClaimDictionaryService ClaimDictionaryService
+@rendermode InteractiveServer
+@attribute [Authorize(Roles="Administrator")]
+
+<h3>Manage Claims Dictionary</h3>
+
+<div>
+    <h4>Add New Claim</h4>
+    <EditForm Model="@newClaim" OnValidSubmit="AddClaim" Context="addFormContext">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <div>
+            <label>Claim Type:</label>
+            <InputText @bind-Value="newClaim.ClaimType" />
+        </div>
+        <div>
+            <label>Claim Value:</label>
+            <InputText @bind-Value="newClaim.ClaimValue" />
+        </div>
+        <button type="submit">Add Claim</button>
+    </EditForm>
+</div>
+
+<div>
+    <h4>Existing Claims</h4>
+    <table>
+        <thead>
+            <tr>
+                <th>Claim Type</th>
+                <th>Claim Value</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var claim in claims)
+            {
+                <tr>
+                    <td>@claim.ClaimType</td>
+                    <td>@claim.ClaimValue</td>
+                    <td>
+                        <button @onclick="() => EditClaim(claim)">Edit</button>
+                        <button @onclick="() => DeleteClaim(claim.ClaimId)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (isEditing)
+{
+    <div>
+        <h4>Edit Claim</h4>
+        <EditForm Model="@editClaim" OnValidSubmit="UpdateClaim" Context="editFormContext">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div>
+                <label>Claim Type:</label>
+                <InputText @bind-Value="editClaim.ClaimType" />
+            </div>
+            <div>
+                <label>Claim Value:</label>
+                <InputText @bind-Value="editClaim.ClaimValue" />
+            </div>
+            <button type="submit">Update Claim</button>
+            <button type="button" @onclick="CancelEdit">Cancel</button>
+        </EditForm>
+    </div>
+}
+
+@code {
+    private List<ClaimDictionaryModel> claims = new List<ClaimDictionaryModel>();
+    private ClaimDictionaryModel newClaim = new ClaimDictionaryModel();
+    private ClaimDictionaryModel editClaim = new ClaimDictionaryModel();
+    private bool isEditing = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        claims = (await ClaimDictionaryService.GetAllClaimsAsync()).ToList();
+    }
+
+    private async Task AddClaim()
+    {
+        await ClaimDictionaryService.CreateClaimAsync(newClaim);
+        claims = (await ClaimDictionaryService.GetAllClaimsAsync()).ToList();
+        newClaim = new ClaimDictionaryModel();
+    }
+
+    private void EditClaim(ClaimDictionaryModel claim)
+    {
+        editClaim = new ClaimDictionaryModel
+        {
+            ClaimId = claim.ClaimId,
+            ClaimType = claim.ClaimType,
+            ClaimValue = claim.ClaimValue
+        };
+        isEditing = true;
+    }
+
+    private async Task UpdateClaim()
+    {
+        await ClaimDictionaryService.UpdateClaimAsync(editClaim);
+        claims = (await ClaimDictionaryService.GetAllClaimsAsync()).ToList();
+        isEditing = false;
+        editClaim = new ClaimDictionaryModel();
+    }
+
+    private async Task DeleteClaim(int claimId)
+    {
+        await ClaimDictionaryService.DeleteClaimAsync(claimId);
+        claims = (await ClaimDictionaryService.GetAllClaimsAsync()).ToList();
+    }
+
+    private void CancelEdit()
+    {
+        isEditing = false;
+        editClaim = new ClaimDictionaryModel();
+    }
+}

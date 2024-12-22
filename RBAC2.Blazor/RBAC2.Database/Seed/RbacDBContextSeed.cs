@@ -18,14 +18,14 @@ namespace RBAC2.Database
                 {
                     Login = "domain\\user1",
                     CzyAktywny = true,
-                    CosUser = "Admin",
+                    //CosUser = "Admin",
                
                 },
                 new User
                 {
                     Login = "domain\\user2",
                     CzyAktywny = false,
-                    CosUser = "Developer",
+                    //CosUser = "Developer",
                    
                 }
             };
@@ -48,14 +48,12 @@ namespace RBAC2.Database
                 new Project
                 {
                     Name = "Project Alpha",
-                    Description = "Main application development",
-                    CosProject = "Alpha"
+                    Description = "Main application development"
                 },
                 new Project
                 {
                     Name = "Project Beta",
-                    Description = "Beta testing phase",
-                    CosProject = "Beta"
+                    Description = "Beta testing phase"
                 }
             };
 

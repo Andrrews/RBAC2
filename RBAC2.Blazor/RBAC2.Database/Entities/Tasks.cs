@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace RBAC2.Database.Entities
 {
+    [Table("Tasks", Schema = "own")]
     public class Tasks
     {
         [Key]

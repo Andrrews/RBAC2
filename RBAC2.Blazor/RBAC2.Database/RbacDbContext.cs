@@ -22,6 +22,7 @@ namespace RBAC2.Database
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            modelBuilder.HasDefaultSchema("dbo");
 
             modelBuilder.Entity<User>()
                 .HasOne(u => u.IdentityUser)

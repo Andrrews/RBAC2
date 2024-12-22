@@ -29,9 +29,9 @@ namespace RBAC2.Database.Seed
                         var identityUser = new IdentityUser
                         {
                             Id = Guid.NewGuid().ToString(),
-                            UserName = user.CosUser,
+                            UserName = user.Login,
                             Email = null,
-                            NormalizedUserName = user.CosUser.ToLower(),
+                            NormalizedUserName = user.Login.ToLower(),
                             NormalizedEmail = null,
                             EmailConfirmed = true // Zakładamy, że email jest potwierdzony
                         };

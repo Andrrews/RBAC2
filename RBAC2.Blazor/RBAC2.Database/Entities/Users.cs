@@ -3,12 +3,14 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace RBAC2.Database.Entities
 {
+    [Table("User", Schema = "own")]
     public class User 
     {
         public int UserId { get; set; }
@@ -19,9 +21,6 @@ namespace RBAC2.Database.Entities
 
         [Required]
         public bool CzyAktywny { get; set; }
-
-        public string CosUser { get; set; }
-
 
         public ICollection<Tasks> Tasks { get; set; } = new List<Tasks>();
         // Relacja z IdentityUser

@@ -2,6 +2,7 @@
 
 namespace RBAC2.Database
 {
+    [Obsolete(message:"Klasa była na potrzeby testowania z SQLlite")]
     public static class RbacDbContextSeed
     {
         public static void Seed(RbacDbContext context)

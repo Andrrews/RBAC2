@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace RBAC2.Database.Seed
 {
+    [Obsolete(message:"Docelowo metoda w klasie miała utworzyć w AspNetUsers wpisy i powiązać z obiektami z klasy Users - do wykonania tylko raz")]
     public class OnceTransferUsersToAspNetUsers
     {
         public static async Task SeedUsersAsync(IServiceProvider serviceProvider)
